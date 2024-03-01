@@ -3049,6 +3049,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     modelDefinitionSize?: number;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
