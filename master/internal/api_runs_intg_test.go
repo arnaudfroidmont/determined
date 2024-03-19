@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	service "github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -489,4 +490,73 @@ func TestMoveRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
+}
+
+func TestRunMetadata(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// Create a run
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters,
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+	r := resp.Runs[0]
+
+	// Add metadata
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	metadataResp, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+
+	// Get metadata
+	getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata := getResp.Metadata.AsMap()
+	require.Equal(t, len(actualMetadata), len(rawMetadata))
+	require.Equal(t, rawMetadata, actualMetadata)
+
+	// Add more Metadata
+	rawMetadata2 := map[string]interface{}{
+		"test_key2": "test_value2",
+		"nested2": map[string]interface{}{
+			"nested_key2": "nested_value2",
+		},
+	}
+	metadata2 := newProtoStruct(t, rawMetadata2)
+	mergedMetadata, err := service.MergeRunMetadata(rawMetadata, rawMetadata2)
+	require.NoError(t, err)
+	metadataResp2, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata2,
+	})
+	require.NoError(t, err)
+	require.Equal(t, mergedMetadata, metadataResp2.Metadata.AsMap())
+
+	// Get metadata
+	getResp, err = api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata = getResp.Metadata.AsMap()
+	require.Equal(t, len(mergedMetadata), len(actualMetadata))
+	require.Equal(t, mergedMetadata, actualMetadata)
 }

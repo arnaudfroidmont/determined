@@ -4464,6 +4464,19 @@ export interface V1GetRolesByIDResponse {
     roles?: Array<V1RoleWithAssignments>;
 }
 /**
+ * Response to get the metadata of a run.
+ * @export
+ * @interface V1GetRunMetadataResponse
+ */
+export interface V1GetRunMetadataResponse {
+    /**
+     * The arbitrary metadata of the run.
+     * @type {any}
+     * @memberof V1GetRunMetadataResponse
+     */
+    metadata?: any;
+}
+/**
  * Response to GetSearcherEventsRequest.
  * @export
  * @interface V1GetSearcherEventsResponse
@@ -7685,6 +7698,38 @@ export interface V1PostProjectResponse {
      * @memberof V1PostProjectResponse
      */
     project: V1Project;
+}
+/**
+ * Request to post metadata for a run.
+ * @export
+ * @interface V1PostRunMetadataRequest
+ */
+export interface V1PostRunMetadataRequest {
+    /**
+     * The ID of the run to post metadata for.
+     * @type {number}
+     * @memberof V1PostRunMetadataRequest
+     */
+    runId?: number;
+    /**
+     * The arbitrary metadata to post.
+     * @type {any}
+     * @memberof V1PostRunMetadataRequest
+     */
+    metadata: any;
+}
+/**
+ * Response to post metadata for a run.
+ * @export
+ * @interface V1PostRunMetadataResponse
+ */
+export interface V1PostRunMetadataResponse {
+    /**
+     * The new metadata of the run.
+     * @type {any}
+     * @memberof V1PostRunMetadataResponse
+     */
+    metadata?: any;
 }
 /**
  * Request for sending operations from a custom search method.
@@ -19194,6 +19239,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get run metadata.
+         * @param {number} runId The ID of the run to get metadata for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunMetadata(runId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'runId' is not null or undefined
+            if (runId === null || runId === undefined) {
+                throw new RequiredError('runId','Required parameter runId was null or undefined when calling getRunMetadata.');
+            }
+            const localVarPath = `/api/v1/runs/{runId}/metadata`
+                .replace(`{${"runId"}}`, encodeURIComponent(String(runId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -20106,6 +20187,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/proxy_address`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update run metadata.
+         * @param {number} runId The ID of the run to post metadata for.
+         * @param {V1PostRunMetadataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postRunMetadata(runId: number, body: V1PostRunMetadataRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'runId' is not null or undefined
+            if (runId === null || runId === undefined) {
+                throw new RequiredError('runId','Required parameter runId was null or undefined when calling postRunMetadata.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postRunMetadata.');
+            }
+            const localVarPath = `/api/v1/runs/{runId}/metadata`
+                .replace(`{${"runId"}}`, encodeURIComponent(String(runId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -21737,6 +21862,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get run metadata.
+         * @param {number} runId The ID of the run to get metadata for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunMetadata(runId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRunMetadataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getRunMetadata(runId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -22155,6 +22299,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Update run metadata.
+         * @param {number} runId The ID of the run to post metadata for.
+         * @param {V1PostRunMetadataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postRunMetadata(runId: number, body: V1PostRunMetadataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostRunMetadataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postRunMetadata(runId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22945,6 +23109,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get run metadata.
+         * @param {number} runId The ID of the run to get metadata for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRunMetadata(runId: number, options?: any) {
+            return InternalApiFp(configuration).getRunMetadata(runId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -23183,6 +23357,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
             return InternalApiFp(configuration).postAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Update run metadata.
+         * @param {number} runId The ID of the run to post metadata for.
+         * @param {V1PostRunMetadataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postRunMetadata(runId: number, body: V1PostRunMetadataRequest, options?: any) {
+            return InternalApiFp(configuration).postRunMetadata(runId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23827,6 +24012,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get run metadata.
+     * @param {number} runId The ID of the run to get metadata for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getRunMetadata(runId: number, options?: any) {
+        return InternalApiFp(this.configuration).getRunMetadata(runId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
      * @param {string} taskId The id of the task.
      * @param {*} [options] Override http request option.
@@ -24106,6 +24303,19 @@ export class InternalApi extends BaseAPI {
      */
     public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
         return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Update run metadata.
+     * @param {number} runId The ID of the run to post metadata for.
+     * @param {V1PostRunMetadataRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postRunMetadata(runId: number, body: V1PostRunMetadataRequest, options?: any) {
+        return InternalApiFp(this.configuration).postRunMetadata(runId, body, options)(this.fetch, this.basePath)
     }
     
     /**

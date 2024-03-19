@@ -6,18 +6,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/pkg/errors"
-
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -403,4 +406,88 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
+}
+
+// TODO (corban): this should be included in GetRun.
+// GetRunMetadata returns the metadata of a run.
+func (a *apiServer) GetRunMetadata(
+	ctx context.Context, req *apiv1.GetRunMetadataRequest,
+) (*apiv1.GetRunMetadataResponse, error) {
+	// TODO(runs) run specific RBAC.
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
+	out := struct {
+		bun.BaseModel `bun:"table:runs"`
+		Metadata      model.JSONObj
+	}{}
+	err := db.Bun().NewSelect().Model(&out).Column("metadata").Where("id = ?", req.RunId).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting metadata on run(%d): %w", req.RunId, err)
+	}
+
+	return &apiv1.GetRunMetadataResponse{
+		Metadata: protoutils.ToStruct(out.Metadata),
+	}, nil
+}
+
+// PostRunMetadata updates the metadata of a run.
+func (a *apiServer) PostRunMetadata(
+	ctx context.Context, req *apiv1.PostRunMetadataRequest,
+) (*apiv1.PostRunMetadataResponse, error) {
+	// TODO(runs) run specific RBAC.
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
+
+	// Get the current run.
+	currentRun, err := db.GetRun(ctx, int(req.RunId))
+	if err != nil {
+		return nil, fmt.Errorf("error getting run(%d): %w", req.RunId, err)
+	}
+
+	// Flatten Request Metadata.
+	flatMetadata := run.FlattenRunMetadata(req.Metadata.AsMap())
+	flatKeys := make(map[string]struct{})
+	for _, record := range flatMetadata {
+		flatKeys[record.FlatKey] = struct{}{}
+	}
+
+	// Get the current metadata.
+	currFlatKeys, err := db.GetRunMetadataKeys(ctx, int(req.RunId))
+	if err != nil {
+		return nil, fmt.Errorf("error getting current metadata keys on run(%d): %w", req.RunId, err)
+	}
+
+	// Check if the metadata is unique.
+	// note: this logic won't work if we allow appending to existing list values.
+	for _, key := range currFlatKeys {
+		if _, ok := flatKeys[key]; ok {
+			return nil, errors.Wrapf(apiutils.ErrDuplicateRecord, "metadata key %s already exists on run(%d)", key, req.RunId)
+		}
+	}
+
+	// Merge Metadata JSON
+	if currentRun.Metadata == nil {
+		currentRun.Metadata = make(map[string]interface{})
+	}
+	combinedMetadata, err := run.MergeRunMetadata(currentRun.Metadata, req.Metadata.AsMap())
+	if err != nil {
+		return nil, fmt.Errorf("error merging metadata on run(%d): %w", req.RunId, err)
+	}
+
+	// Update the metadata in DB
+	for i := range flatMetadata {
+		flatMetadata[i].RunID = int(req.RunId)
+		flatMetadata[i].ProjectID = currentRun.ProjectID
+	}
+	err = db.UpdateRunMetadata(ctx, int(req.RunId), combinedMetadata, flatMetadata)
+	if err != nil {
+		return nil, fmt.Errorf("error updating metadata on run(%d): %w", req.RunId, err)
+	}
+
+	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(combinedMetadata)}, nil
 }

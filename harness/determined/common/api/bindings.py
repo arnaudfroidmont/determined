@@ -5881,6 +5881,33 @@ class v1GetRolesByIDResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
+class v1GetRunMetadataResponse(Printable):
+    """Response to get the metadata of a run."""
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRunMetadataResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
+        return out
+
 class v1GetSearcherEventsResponse(Printable):
     """Response to GetSearcherEventsRequest."""
     searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
@@ -10533,6 +10560,64 @@ class v1PostProjectResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "project": self.project.to_json(omit_unset),
         }
+        return out
+
+class v1PostRunMetadataRequest(Printable):
+    """Request to post metadata for a run."""
+    runId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Dict[str, typing.Any]",
+        runId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.metadata = metadata
+        if not isinstance(runId, Unset):
+            self.runId = runId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostRunMetadataRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metadata": obj["metadata"],
+        }
+        if "runId" in obj:
+            kwargs["runId"] = obj["runId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metadata": self.metadata,
+        }
+        if not omit_unset or "runId" in vars(self):
+            out["runId"] = self.runId
+        return out
+
+class v1PostRunMetadataResponse(Printable):
+    """Response to post metadata for a run."""
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostRunMetadataResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         return out
 
 class v1PostSearcherOperationsRequest(Printable):
@@ -18710,6 +18795,30 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
+def get_GetRunMetadata(
+    session: "api.BaseSession",
+    *,
+    runId: int,
+) -> "v1GetRunMetadataResponse":
+    """Get run metadata.
+
+    - runId: The ID of the run to get metadata for.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/runs/{runId}/metadata",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRunMetadataResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRunMetadata", _resp)
+
 def get_GetSearcherEvents(
     session: "api.BaseSession",
     *,
@@ -21154,6 +21263,31 @@ def post_PostProject(
     if _resp.status_code == 200:
         return v1PostProjectResponse.from_json(_resp.json())
     raise APIHttpError("post_PostProject", _resp)
+
+def post_PostRunMetadata(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostRunMetadataRequest",
+    runId: int,
+) -> "v1PostRunMetadataResponse":
+    """Update run metadata.
+
+    - runId: The ID of the run to post metadata for.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/runs/{runId}/metadata",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostRunMetadataResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostRunMetadata", _resp)
 
 def post_PostSearcherOperations(
     session: "api.BaseSession",
