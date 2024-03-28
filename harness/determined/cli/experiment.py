@@ -633,9 +633,8 @@ def wait(args: Namespace) -> None:
         sys.exit(1)
 
 
-def list_experiments(args: Namespace) -> None:
-    sess = cli.setup_session(args)
-
+@cli.session
+def list_experiments(args: Namespace, sess: api.Session) -> None:
     def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
         return bindings.get_GetExperiments(
             sess,
