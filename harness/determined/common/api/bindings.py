@@ -970,16 +970,20 @@ class v1AckAllocationPreemptionSignalRequest(Printable):
 class v1ActivateExperimentsRequest(Printable):
     """Activate multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ActivateExperimentsRequest":
@@ -988,6 +992,8 @@ class v1ActivateExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -996,6 +1002,8 @@ class v1ActivateExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1ActivateExperimentsResponse(Printable):
@@ -1649,16 +1657,20 @@ class v1AllocationWaitingRequest(Printable):
 class v1ArchiveExperimentsRequest(Printable):
     """Archive multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ArchiveExperimentsRequest":
@@ -1667,6 +1679,8 @@ class v1ArchiveExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1675,6 +1689,8 @@ class v1ArchiveExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1ArchiveExperimentsResponse(Printable):
@@ -1919,16 +1935,20 @@ class v1BulkExperimentFilters(Printable):
 class v1CancelExperimentsRequest(Printable):
     """Cancel multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CancelExperimentsRequest":
@@ -1937,6 +1957,8 @@ class v1CancelExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1945,6 +1967,8 @@ class v1CancelExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1CancelExperimentsResponse(Printable):
@@ -3063,16 +3087,20 @@ class v1DeleteExperimentLabelResponse(Printable):
 class v1DeleteExperimentsRequest(Printable):
     """Delete multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeleteExperimentsRequest":
@@ -3081,6 +3109,8 @@ class v1DeleteExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -3089,6 +3119,8 @@ class v1DeleteExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1DeleteExperimentsResponse(Printable):
@@ -7241,16 +7273,20 @@ class v1KillCommandResponse(Printable):
 class v1KillExperimentsRequest(Printable):
     """Kill multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1KillExperimentsRequest":
@@ -7259,6 +7295,8 @@ class v1KillExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7267,6 +7305,8 @@ class v1KillExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1KillExperimentsResponse(Printable):
@@ -7691,6 +7731,7 @@ class v1LaunchTensorboardRequest(Printable):
     experimentIds: "typing.Optional[typing.Sequence[int]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
     templateName: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -7702,6 +7743,7 @@ class v1LaunchTensorboardRequest(Printable):
         experimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
@@ -7714,6 +7756,8 @@ class v1LaunchTensorboardRequest(Printable):
             self.files = files
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
         if not isinstance(templateName, Unset):
             self.templateName = templateName
         if not isinstance(trialIds, Unset):
@@ -7733,6 +7777,8 @@ class v1LaunchTensorboardRequest(Printable):
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
         if "trialIds" in obj:
@@ -7752,6 +7798,8 @@ class v1LaunchTensorboardRequest(Printable):
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
         if not omit_unset or "trialIds" in vars(self):
@@ -8671,6 +8719,7 @@ class v1MoveExperimentRequest(Printable):
 class v1MoveExperimentsRequest(Printable):
     """Request to move an experiment into a project."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -8678,11 +8727,14 @@ class v1MoveExperimentsRequest(Printable):
         destinationProjectId: int,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveExperimentsRequest":
@@ -8692,6 +8744,8 @@ class v1MoveExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -8701,6 +8755,8 @@ class v1MoveExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1MoveExperimentsResponse(Printable):
@@ -9933,16 +9989,20 @@ class v1PatchWorkspaceResponse(Printable):
 class v1PauseExperimentsRequest(Printable):
     """Pause multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PauseExperimentsRequest":
@@ -9951,6 +10011,8 @@ class v1PauseExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9959,6 +10021,8 @@ class v1PauseExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1PauseExperimentsResponse(Printable):
@@ -11201,6 +11265,7 @@ class v1PutExperimentRetainLogsRequest(Printable):
 class v1PutExperimentsRetainLogsRequest(Printable):
     """Request for changing the log retention policy for the an experiment."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -11208,11 +11273,14 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         experimentIds: "typing.Sequence[int]",
         numDays: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         self.numDays = numDays
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutExperimentsRetainLogsRequest":
@@ -11222,6 +11290,8 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -11231,6 +11301,8 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1PutExperimentsRetainLogsResponse(Printable):
@@ -15215,16 +15287,20 @@ class v1TriggerType(DetEnum):
 class v1UnarchiveExperimentsRequest(Printable):
     """Unarchive multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
+    searchFilter: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         experimentIds: "typing.Sequence[int]",
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+        searchFilter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         if not isinstance(filters, Unset):
             self.filters = filters
+        if not isinstance(searchFilter, Unset):
+            self.searchFilter = searchFilter
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsRequest":
@@ -15233,6 +15309,8 @@ class v1UnarchiveExperimentsRequest(Printable):
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        if "searchFilter" in obj:
+            kwargs["searchFilter"] = obj["searchFilter"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -15241,6 +15319,8 @@ class v1UnarchiveExperimentsRequest(Printable):
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        if not omit_unset or "searchFilter" in vars(self):
+            out["searchFilter"] = self.searchFilter
         return out
 
 class v1UnarchiveExperimentsResponse(Printable):
