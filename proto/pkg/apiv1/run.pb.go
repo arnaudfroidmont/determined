@@ -272,211 +272,6 @@ func (x *SearchRunsResponse) GetPagination() *Pagination {
 	return nil
 }
 
-// Request to get the metadata of a run.
-type GetRunMetadataRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The ID of the run to get metadata for.
-	RunId int32 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-}
-
-func (x *GetRunMetadataRequest) Reset() {
-	*x = GetRunMetadataRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_run_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRunMetadataRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRunMetadataRequest) ProtoMessage() {}
-
-func (x *GetRunMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_run_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRunMetadataRequest.ProtoReflect.Descriptor instead.
-func (*GetRunMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetRunMetadataRequest) GetRunId() int32 {
-	if x != nil {
-		return x.RunId
-	}
-	return 0
-}
-
-// Response to get the metadata of a run.
-type GetRunMetadataResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The arbitrary metadata of the run.
-	Metadata *_struct.Struct `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-}
-
-func (x *GetRunMetadataResponse) Reset() {
-	*x = GetRunMetadataResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_run_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRunMetadataResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRunMetadataResponse) ProtoMessage() {}
-
-func (x *GetRunMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_run_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRunMetadataResponse.ProtoReflect.Descriptor instead.
-func (*GetRunMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetRunMetadataResponse) GetMetadata() *_struct.Struct {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-// Request to post metadata for a run.
-type PostRunMetadataRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The ID of the run to post metadata for.
-	RunId int32 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// The arbitrary metadata to post.
-	Metadata *_struct.Struct `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-}
-
-func (x *PostRunMetadataRequest) Reset() {
-	*x = PostRunMetadataRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_run_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PostRunMetadataRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PostRunMetadataRequest) ProtoMessage() {}
-
-func (x *PostRunMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_run_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PostRunMetadataRequest.ProtoReflect.Descriptor instead.
-func (*PostRunMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *PostRunMetadataRequest) GetRunId() int32 {
-	if x != nil {
-		return x.RunId
-	}
-	return 0
-}
-
-func (x *PostRunMetadataRequest) GetMetadata() *_struct.Struct {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-// Response to post metadata for a run.
-type PostRunMetadataResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The new metadata of the run.
-	Metadata *_struct.Struct `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-}
-
-func (x *PostRunMetadataResponse) Reset() {
-	*x = PostRunMetadataResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_run_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PostRunMetadataResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PostRunMetadataResponse) ProtoMessage() {}
-
-func (x *PostRunMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_run_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PostRunMetadataResponse.ProtoReflect.Descriptor instead.
-func (*PostRunMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *PostRunMetadataResponse) GetMetadata() *_struct.Struct {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
 // Message for results of individual runs in a multi-run action.
 type RunActionResult struct {
 	state         protoimpl.MessageState
@@ -669,6 +464,211 @@ func (x *MoveRunsResponse) GetResults() []*RunActionResult {
 	return nil
 }
 
+// Request to get the metadata of a run.
+type GetRunMetadataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the run to get metadata for.
+	RunId int32 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+}
+
+func (x *GetRunMetadataRequest) Reset() {
+	*x = GetRunMetadataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRunMetadataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRunMetadataRequest) ProtoMessage() {}
+
+func (x *GetRunMetadataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRunMetadataRequest.ProtoReflect.Descriptor instead.
+func (*GetRunMetadataRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetRunMetadataRequest) GetRunId() int32 {
+	if x != nil {
+		return x.RunId
+	}
+	return 0
+}
+
+// Response to get the metadata of a run.
+type GetRunMetadataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The arbitrary metadata of the run.
+	Metadata *_struct.Struct `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *GetRunMetadataResponse) Reset() {
+	*x = GetRunMetadataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRunMetadataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRunMetadataResponse) ProtoMessage() {}
+
+func (x *GetRunMetadataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRunMetadataResponse.ProtoReflect.Descriptor instead.
+func (*GetRunMetadataResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetRunMetadataResponse) GetMetadata() *_struct.Struct {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// Request to post metadata for a run.
+type PostRunMetadataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the run to post metadata for.
+	RunId int32 `protobuf:"varint,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// The arbitrary metadata to post.
+	Metadata *_struct.Struct `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *PostRunMetadataRequest) Reset() {
+	*x = PostRunMetadataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostRunMetadataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostRunMetadataRequest) ProtoMessage() {}
+
+func (x *PostRunMetadataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostRunMetadataRequest.ProtoReflect.Descriptor instead.
+func (*PostRunMetadataRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PostRunMetadataRequest) GetRunId() int32 {
+	if x != nil {
+		return x.RunId
+	}
+	return 0
+}
+
+func (x *PostRunMetadataRequest) GetMetadata() *_struct.Struct {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// Response to post metadata for a run.
+type PostRunMetadataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The new metadata of the run.
+	Metadata *_struct.Struct `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *PostRunMetadataResponse) Reset() {
+	*x = PostRunMetadataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_run_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostRunMetadataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostRunMetadataResponse) ProtoMessage() {}
+
+func (x *PostRunMetadataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_run_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostRunMetadataResponse.ProtoReflect.Descriptor instead.
+func (*PostRunMetadataResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_run_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PostRunMetadataResponse) GetMetadata() *_struct.Struct {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 var File_determined_api_v1_run_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_run_proto_rawDesc = []byte{
@@ -751,11 +751,32 @@ var file_determined_api_v1_run_proto_rawDesc = []byte{
 	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x75, 0x6e,
 	0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65,
 	0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a, 0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72,
-	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d,
-	0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x3a, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6e,
+	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x15, 0x0a, 0x06, 0x72, 0x75, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x05, 0x72, 0x75, 0x6e, 0x49, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02,
+	0x69, 0x64, 0x22, 0x4d, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6e, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x08,
+	0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
+	0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0x22, 0x7b, 0x0a, 0x16, 0x50, 0x6f, 0x73, 0x74, 0x52, 0x75, 0x6e, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x72,
+	0x75, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x72, 0x75, 0x6e,
+	0x49, 0x64, 0x12, 0x33, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x08, 0x6d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x3a, 0x15, 0x92, 0x41, 0x12, 0x0a, 0x10, 0xd2, 0x01,
+	0x02, 0x69, 0x64, 0xd2, 0x01, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22, 0x4e,
+	0x0a, 0x17, 0x50, 0x6f, 0x73, 0x74, 0x52, 0x75, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x08, 0x6d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74,
+	0x72, 0x75, 0x63, 0x74, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -770,7 +791,7 @@ func file_determined_api_v1_run_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_run_proto_rawDescData
 }
 
-var file_determined_api_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_determined_api_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_determined_api_v1_run_proto_goTypes = []interface{}{
 	(*RunPrepareForReportingRequest)(nil),  // 0: determined.api.v1.RunPrepareForReportingRequest
 	(*RunPrepareForReportingResponse)(nil), // 1: determined.api.v1.RunPrepareForReportingResponse
@@ -779,20 +800,27 @@ var file_determined_api_v1_run_proto_goTypes = []interface{}{
 	(*RunActionResult)(nil),                // 4: determined.api.v1.RunActionResult
 	(*MoveRunsRequest)(nil),                // 5: determined.api.v1.MoveRunsRequest
 	(*MoveRunsResponse)(nil),               // 6: determined.api.v1.MoveRunsResponse
-	(*_struct.Struct)(nil),                 // 7: google.protobuf.Struct
-	(*runv1.FlatRun)(nil),                  // 8: determined.run.v1.FlatRun
-	(*Pagination)(nil),                     // 9: determined.api.v1.Pagination
+	(*GetRunMetadataRequest)(nil),          // 7: determined.api.v1.GetRunMetadataRequest
+	(*GetRunMetadataResponse)(nil),         // 8: determined.api.v1.GetRunMetadataResponse
+	(*PostRunMetadataRequest)(nil),         // 9: determined.api.v1.PostRunMetadataRequest
+	(*PostRunMetadataResponse)(nil),        // 10: determined.api.v1.PostRunMetadataResponse
+	(*_struct.Struct)(nil),                 // 11: google.protobuf.Struct
+	(*runv1.FlatRun)(nil),                  // 12: determined.run.v1.FlatRun
+	(*Pagination)(nil),                     // 13: determined.api.v1.Pagination
 }
 var file_determined_api_v1_run_proto_depIdxs = []int32{
-	7, // 0: determined.api.v1.RunPrepareForReportingRequest.checkpoint_storage:type_name -> google.protobuf.Struct
-	8, // 1: determined.api.v1.SearchRunsResponse.runs:type_name -> determined.run.v1.FlatRun
-	9, // 2: determined.api.v1.SearchRunsResponse.pagination:type_name -> determined.api.v1.Pagination
-	4, // 3: determined.api.v1.MoveRunsResponse.results:type_name -> determined.api.v1.RunActionResult
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	11, // 0: determined.api.v1.RunPrepareForReportingRequest.checkpoint_storage:type_name -> google.protobuf.Struct
+	12, // 1: determined.api.v1.SearchRunsResponse.runs:type_name -> determined.run.v1.FlatRun
+	13, // 2: determined.api.v1.SearchRunsResponse.pagination:type_name -> determined.api.v1.Pagination
+	4,  // 3: determined.api.v1.MoveRunsResponse.results:type_name -> determined.api.v1.RunActionResult
+	11, // 4: determined.api.v1.GetRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
+	11, // 5: determined.api.v1.PostRunMetadataRequest.metadata:type_name -> google.protobuf.Struct
+	11, // 6: determined.api.v1.PostRunMetadataResponse.metadata:type_name -> google.protobuf.Struct
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_run_proto_init() }
@@ -886,6 +914,54 @@ func file_determined_api_v1_run_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_run_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRunMetadataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_run_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRunMetadataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_run_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostRunMetadataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_run_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostRunMetadataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_run_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	file_determined_api_v1_run_proto_msgTypes[1].OneofWrappers = []interface{}{}
@@ -897,7 +973,7 @@ func file_determined_api_v1_run_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_run_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
