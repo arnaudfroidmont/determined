@@ -6,16 +6,18 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	service "github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/runv1"
 )
 
 func TestSearchRunsSort(t *testing.T) {
@@ -492,27 +494,28 @@ func TestMoveRunsFilter(t *testing.T) {
 	require.Len(t, resp.Runs, 1)
 }
 
-func TestRunMetadata(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t, nil)
+func createTestRun(ctx context.Context, t *testing.T, api *apiServer, curUser model.User) *runv1.FlatRun {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	projectID := int32(projectIDInt)
-
-	// Create a run
-	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
-	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, int(projectID))
 	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
-	require.NoError(t, db.AddTask(ctx, task))
-	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
 		State:        model.PausedState,
 		ExperimentID: exp.ID,
 		StartTime:    time.Now(),
-		HParams:      hyperparameters,
 	}, task.TaskID))
 
 	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
-	r := resp.Runs[0]
+
+	return resp.Runs[0]
+}
+
+func TestRunMetadata(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
 
 	// Add metadata
 	rawMetadata := map[string]interface{}{
@@ -544,7 +547,7 @@ func TestRunMetadata(t *testing.T) {
 		},
 	}
 	metadata2 := newProtoStruct(t, rawMetadata2)
-	mergedMetadata, err := service.MergeRunMetadata(rawMetadata, rawMetadata2)
+	mergedMetadata, err := db.MergeRunMetadata(rawMetadata, rawMetadata2)
 	require.NoError(t, err)
 	metadataResp2, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
 		RunId:    r.Id,
@@ -559,4 +562,173 @@ func TestRunMetadata(t *testing.T) {
 	actualMetadata = getResp.Metadata.AsMap()
 	require.Equal(t, len(mergedMetadata), len(actualMetadata))
 	require.Equal(t, mergedMetadata, actualMetadata)
+}
+
+func TestRunMetadataFailureOnDuplicateKey(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	// Add metadata
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	// Fail to add metadata with duplicate key
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "following metadata key(s) already exist")
+}
+
+func TestDuplicateConcurrentMetadataPosts(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+	numRoutines := 25
+	numSuccess := 3
+
+	concurrentMetadataList := make([]*structpb.Struct, numRoutines)
+	mergedMetadata := make(map[string]interface{})
+	for i := 0; i < numRoutines; i++ {
+		rawMetadata := map[string]interface{}{
+			fmt.Sprintf("test_key%d", i%(numSuccess)): fmt.Sprintf("test_value%d", i%(numSuccess)),
+			fmt.Sprintf("nested%d", i%(numSuccess)): map[string]interface{}{
+				fmt.Sprintf("nested_key%d", i%(numSuccess)): fmt.Sprintf("nested_value%d", i%(numSuccess)),
+			},
+		}
+		concurrentMetadataList[i] = newProtoStruct(t, rawMetadata)
+		if i < numSuccess {
+			mergedMetadata, _ = db.MergeRunMetadata(mergedMetadata, rawMetadata)
+		}
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(numRoutines)
+	successes := 0
+	successChan := make(chan bool)
+	for i := 0; i < numRoutines; i++ {
+		tempMetadata := concurrentMetadataList[i]
+		go func() {
+			defer wg.Done()
+			_, subErr := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+				RunId:    r.Id,
+				Metadata: tempMetadata,
+			})
+			if subErr == nil {
+				successChan <- true
+			}
+		}()
+	}
+
+	for successes < numSuccess {
+		select {
+		case <-successChan:
+			successes++
+			if successes == numSuccess {
+				// ensure error on next success
+				close(successChan)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatal("timeout waiting for all routines to finish")
+		}
+	}
+	wg.Wait()
+
+	getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata := getResp.Metadata.AsMap()
+	require.Equal(t, len(mergedMetadata), len(actualMetadata))
+	require.Equal(t, mergedMetadata, actualMetadata)
+}
+
+func TestConcurrentMetadataPostsNoDuplicates(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+	numRoutines := 25
+
+	concurrentMetadataList := make([]*structpb.Struct, numRoutines)
+	mergedMetadata := make(map[string]interface{})
+	for i := 0; i < numRoutines; i++ {
+		rawMetadata := map[string]interface{}{
+			fmt.Sprintf("test_key%d", i): fmt.Sprintf("test_value%d", i),
+			fmt.Sprintf("nested%d", i): map[string]interface{}{
+				fmt.Sprintf("nested_key%d", i): fmt.Sprintf("nested_value%d", i),
+			},
+		}
+		concurrentMetadataList[i] = newProtoStruct(t, rawMetadata)
+		mergedMetadata, _ = db.MergeRunMetadata(mergedMetadata, rawMetadata)
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(numRoutines)
+
+	for i := 0; i < numRoutines; i++ {
+		tempMetadata := concurrentMetadataList[i]
+		go func() {
+			defer wg.Done()
+			_, subErr := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+				RunId:    r.Id,
+				Metadata: tempMetadata,
+			})
+			require.NoError(t, subErr)
+		}()
+	}
+	wg.Wait()
+
+	getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata := getResp.Metadata.AsMap()
+	require.Equal(t, len(mergedMetadata), len(actualMetadata))
+	require.Equal(t, mergedMetadata, actualMetadata)
+}
+
+func TestConcurrentMetadataPostsMultipleRuns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	numRuns := 5
+
+	runs := make([]*runv1.FlatRun, numRuns)
+	for i := 0; i < numRuns; i++ {
+		runs[i] = createTestRun(ctx, t, api, curUser)
+	}
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	wg := sync.WaitGroup{}
+	wg.Add(numRuns)
+	for _, run := range runs {
+		rID := run.Id
+		go func() {
+			defer wg.Done()
+			_, subErr := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+				RunId:    rID,
+				Metadata: metadata,
+			})
+			require.NoError(t, subErr)
+		}()
+	}
+	wg.Wait()
+
+	for _, run := range runs {
+		getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: run.Id})
+		require.NoError(t, err)
+		actualMetadata := getResp.Metadata.AsMap()
+		require.Equal(t, len(rawMetadata), len(actualMetadata))
+		require.Equal(t, rawMetadata, actualMetadata)
+	}
 }

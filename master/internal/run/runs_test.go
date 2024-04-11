@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -178,7 +179,7 @@ func TestMergeRunMetadataOverwriteFailure(t *testing.T) {
 		"key2": 3,
 		"key3": 4,
 	}
-	_, err := MergeRunMetadata(data1, data2)
+	_, err := db.MergeRunMetadata(data1, data2)
 	require.Error(t, err)
 }
 
@@ -191,7 +192,7 @@ func TestMergeRunMetadata(t *testing.T) {
 		"key3": 3,
 		"key4": 4,
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": 1,
@@ -214,7 +215,7 @@ func TestMergeRunMetadataNested(t *testing.T) {
 		},
 		"key5": 4,
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": 1,
@@ -238,8 +239,8 @@ func TestMergeRunMetadataArrayFailure(t *testing.T) {
 			3,
 		},
 	}
-	_, err := MergeRunMetadata(data1, data2)
-	require.ErrorContains(t, err, "unexpected attempt to overwrite existing entry (key1, [1 2]) with new value 3")
+	_, err := db.MergeRunMetadata(data1, data2)
+	require.ErrorContains(t, err, "attempts to overwrite existing entry ('key1': [1 2]) with new value '3': invalid input")
 }
 
 func TestMergeRunMetadataArray(t *testing.T) {
@@ -256,7 +257,7 @@ func TestMergeRunMetadataArray(t *testing.T) {
 			"key4": 5,
 		},
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": []interface{}{
@@ -282,7 +283,7 @@ func TestMergeRunMetadataArrayNested(t *testing.T) {
 			"key3": 2,
 		},
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": map[string]interface{}{
@@ -307,7 +308,7 @@ func TestMergeRunMetadataArrayNestedList(t *testing.T) {
 			},
 		},
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": []interface{}{
@@ -336,8 +337,8 @@ func TestMergeRunMetadataArrayNestedListFailure(t *testing.T) {
 			},
 		},
 	}
-	_, err := MergeRunMetadata(data1, data2)
-	require.ErrorContains(t, err, "unexpected attempt to overwrite existing entry (key2, 1) with new value 2")
+	_, err := db.MergeRunMetadata(data1, data2)
+	require.ErrorContains(t, err, "attempts to overwrite existing entry ('key2': 1) with new value '2'")
 }
 
 func TestMergeRunMetadataArrayNestedListDifferentLength(t *testing.T) {
@@ -358,7 +359,7 @@ func TestMergeRunMetadataArrayNestedListDifferentLength(t *testing.T) {
 			},
 		},
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": []interface{}{
@@ -382,7 +383,7 @@ func TestMergeRunMetadataAppendingToPrimitive(t *testing.T) {
 	data2 := map[string]interface{}{
 		"key1": map[string]interface{}{"key2": 2},
 	}
-	merged, err := MergeRunMetadata(data1, data2)
+	merged, err := db.MergeRunMetadata(data1, data2)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
 		"key1": []interface{}{

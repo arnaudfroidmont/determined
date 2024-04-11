@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
@@ -408,7 +407,6 @@ func (a *apiServer) MoveRuns(
 	return &apiv1.MoveRunsResponse{Results: results}, nil
 }
 
-// TODO (corban): this should be included in GetRun.
 // GetRunMetadata returns the metadata of a run.
 func (a *apiServer) GetRunMetadata(
 	ctx context.Context, req *apiv1.GetRunMetadataRequest,
@@ -443,10 +441,8 @@ func (a *apiServer) PostRunMetadata(
 		return nil, err
 	}
 
-	// Get the current run.
-	currentRun, err := db.GetRun(ctx, int(req.RunId))
-	if err != nil {
-		return nil, fmt.Errorf("error getting run(%d): %w", req.RunId, err)
+	if len(req.Metadata.AsMap()) == 0 || req.Metadata.AsMap() == nil {
+		return nil, status.Error(codes.InvalidArgument, "metadata cannot be empty")
 	}
 
 	// Flatten Request Metadata.
@@ -456,38 +452,17 @@ func (a *apiServer) PostRunMetadata(
 		flatKeys[record.FlatKey] = struct{}{}
 	}
 
-	// Get the current metadata.
-	currFlatKeys, err := db.GetRunMetadataKeys(ctx, int(req.RunId))
-	if err != nil {
-		return nil, fmt.Errorf("error getting current metadata keys on run(%d): %w", req.RunId, err)
-	}
-
-	// Check if the metadata is unique.
-	// note: this logic won't work if we allow appending to existing list values.
-	for _, key := range currFlatKeys {
-		if _, ok := flatKeys[key]; ok {
-			return nil, errors.Wrapf(apiutils.ErrDuplicateRecord, "metadata key %s already exists on run(%d)", key, req.RunId)
-		}
-	}
-
-	// Merge Metadata JSON
-	if currentRun.Metadata == nil {
-		currentRun.Metadata = make(map[string]interface{})
-	}
-	combinedMetadata, err := run.MergeRunMetadata(currentRun.Metadata, req.Metadata.AsMap())
-	if err != nil {
-		return nil, fmt.Errorf("error merging metadata on run(%d): %w", req.RunId, err)
-	}
-
 	// Update the metadata in DB
-	for i := range flatMetadata {
-		flatMetadata[i].RunID = int(req.RunId)
-		flatMetadata[i].ProjectID = currentRun.ProjectID
-	}
-	err = db.UpdateRunMetadata(ctx, int(req.RunId), combinedMetadata, flatMetadata)
-	if err != nil {
-		return nil, fmt.Errorf("error updating metadata on run(%d): %w", req.RunId, err)
+	result, err := db.UpdateRunMetadata(ctx,
+		int(req.RunId),
+		flatKeys,
+		req.Metadata.AsMap(),
+		flatMetadata,
+	)
+	if err != nil && status.Code(err) == codes.InvalidArgument {
+		return nil, err
 	}
 
-	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(combinedMetadata)}, nil
+	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(result)},
+		errors.Wrapf(err, "error updating metadata on run(%d)", req.RunId)
 }
