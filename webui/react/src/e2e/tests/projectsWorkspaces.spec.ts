@@ -7,8 +7,10 @@ import { Workspaces } from 'e2e/models/pages/Workspaces';
 
 test.describe('Projects', () => {
   test.setTimeout(120000);
-  let wsCreatedWithButton: string = '';
-  let wsCreatedWithSidebar: string = '';
+  let wsCreatedWithButton = '';
+  let wsCreatedWithSidebar = '';
+  let projectOneName = '';
+  
   const createWorkspaceAllFields = async function (
     modal: WorkspaceCreateModal,
     wsNamePrefix: string,
@@ -102,7 +104,19 @@ test.describe('Projects', () => {
       expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
     });
 
-    await test.step('Create projects', async () => {});
+    await test.step('Create projects', async () => {
+      await workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator.click();
+      const projects = workspacesPage.details.projects;
+      await projects.pwLocator.click();
+      await projects.content.newProject.pwLocator.click();
+      projectOneName = `test-1-${v4()}`;
+      await projects.content.createProjectModal.projectName.pwLocator.fill(projectOneName);
+      await projects.content.createProjectModal.description.pwLocator.fill(v4());
+      await projects.content.createProjectModal.footer.submit.pwLocator.click();
+      await page.waitForURL('**/projects/*/experiments');
+      await workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator.click();
+      expect(projects.content.cardWithName(projectOneName).pwLocator).toBeVisible();
+    });
     await test.step('Archive a project', async () => {});
     await test.step('Unarchive a project', async () => {});
     await test.step('Navigation on projects page - sorting and list', async () => {});
