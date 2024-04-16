@@ -10,7 +10,7 @@ test.describe('Projects', () => {
   let wsCreatedWithButton = '';
   let wsCreatedWithSidebar = '';
   let projectOneName = '';
-  
+
   const createWorkspaceAllFields = async function (
     modal: WorkspaceCreateModal,
     wsNamePrefix: string,
@@ -45,31 +45,10 @@ test.describe('Projects', () => {
     await expect(page).toHaveURL(/dashboard/);
   });
 
-  test.afterEach(async ({ page }) => {
-    const workspacesPage = new Workspaces(page);
-    await test.step('Delete a workspace', async () => {
-      if (wsCreatedWithButton !== '') {
-        await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-        const workspaceCard = workspacesPage.list.cardWithName(wsCreatedWithButton);
-        await workspaceCard.actionMenu.pwLocator.click();
-        await workspaceCard.actionMenu.delete.pwLocator.click();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton);
-        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
-      }
-    });
-    await test.step('Delete a workspace through sidebar', async () => {
-      if (wsCreatedWithSidebar !== '') {
-        await workspacesPage.nav.sidebar
-          .sidebarItem(wsCreatedWithSidebar)
-          .pwLocator.click({ button: 'right' });
-        await workspacesPage.nav.sidebar.actionMenu.delete.pwLocator.click();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
-        expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
-        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
-      }
-    });
-  });
+  // test.afterEach(async ({ page }) => {
+  //   const workspacesPage = new Workspaces(page);
+    
+  // });
 
   test('Projects and Workspaces CRUD', async ({ page }) => {
     const workspacesPage = new Workspaces(page);
@@ -135,6 +114,37 @@ test.describe('Projects', () => {
     await test.step('Unpin a workspace through the sidebar', async () => {});
     await test.step('Pin a workspace through the sidebar', async () => {});
     await test.step('Delete a model', async () => {});
-    await test.step('Delete a project', async () => {});
+    await test.step('Delete a project', async () => {
+      await workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator.click();
+      await workspacesPage.details.projects.pwLocator.click();
+      const projectCard = workspacesPage.details.projects.content.cardWithName(projectOneName);
+      await projectCard.actionMenu.pwLocator.click();
+      await projectCard.actionMenu.delete.pwLocator.click();
+    });
+    await test.step('Delete a workspace', async () => {
+      if (wsCreatedWithButton !== '') {
+        await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
+        await workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator.click();
+        const projectContent = workspacesPage.details.projects.content
+        const projectCard = projectContent.cardWithName(projectOneName);
+        await projectCard.actionMenu.pwLocator.click();
+        await projectCard.actionMenu.delete.pwLocator.click();
+        await projectContent.deleteProjectModal
+        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton);
+        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
+      }
+    });
+    await test.step('Delete a workspace through sidebar', async () => {
+      if (wsCreatedWithSidebar !== '') {
+        await workspacesPage.nav.sidebar
+          .sidebarItem(wsCreatedWithSidebar)
+          .pwLocator.click({ button: 'right' });
+        await workspacesPage.nav.sidebar.actionMenu.delete.pwLocator.click();
+        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
+        expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
+        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
+        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
+      }
+    });
   });
 });

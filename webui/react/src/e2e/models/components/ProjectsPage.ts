@@ -21,7 +21,7 @@ export class ProjectsComponent extends NamedComponent {
   readonly createProjectModal = new ProjectCreateModal({
     parent: this.root
   });
-  readonly cardWithName = (name: string): Card => {
+  readonly cardWithName = (name: string): ProjectsCard => {
     return Card.withName({ parent: this, name: name }, ProjectsCard)
   };
 }

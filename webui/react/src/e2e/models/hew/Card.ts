@@ -1,4 +1,4 @@
-import { NamedComponent, NamedComponentArgs, parentTypes } from 'e2e/models/BaseComponent';
+import { NamedComponent, NamedComponentArgs, CanBeParent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the card component from Hew.
@@ -12,7 +12,7 @@ export class Card extends NamedComponent {
   static ActionMenuSelector = '[aria-label="Action menu"]';
 
 
-  static withName<T extends Card>(props: {parent: parentTypes, name: string}, cardType: new (args: NamedComponentArgs) => T): T {
+  static withName<T extends Card>(props: {parent: CanBeParent, name: string}, cardType: new (args: NamedComponentArgs) => T): T {
     return new cardType({
       parent: props.parent,
       selector: `[data-testid="card-${props.name}"]`,

@@ -1,6 +1,6 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Pivot } from '../hew/Pivot';
-import { ModelRegistryComponent } from './ModelRegistryPage';
+import { ModelRegistryPage } from './ModelRegistry';
 import { ProjectsComponent } from './ProjectsPage';
 import { TasksComponent } from './TasksPage';
 import { ResourcePoolsComponent } from './ResourcePoolsPage';
@@ -35,7 +35,7 @@ class ProjectsPivot extends Pivot {
     selector: Pivot.selectorTemplateTabs('projects'),
   });
   readonly content: ProjectsComponent = new ProjectsComponent({
-    parent: this.tabContent,
+    parent: this.tabContent, // DNJ TODO - tabContent vs Content is weird. Better Name?
   })
 }
 
@@ -54,7 +54,7 @@ class ModelsPivot extends Pivot {
     parent: this,
     selector: Pivot.selectorTemplateTabs('models'),
   });
-  readonly content: ModelRegistryComponent = new ModelRegistryComponent({
+  readonly content: ModelRegistryPage = new ModelRegistryPage({
     parent: this.tabContent,
   })
 }
