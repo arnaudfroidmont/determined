@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -36,8 +38,9 @@ type getResourceSummary struct{}
 type kubernetesResourcePool struct {
 	mu sync.Mutex
 
-	maxSlotsPerPod int
-	poolConfig     *config.ResourcePoolConfig
+	maxSlotsPerPod   int
+	poolConfig       *config.ResourcePoolConfig
+	defaultNamespace string
 
 	reqList                   *tasklist.TaskList
 	groups                    map[model.JobID]*tasklist.Group
@@ -64,6 +67,7 @@ func newResourcePool(
 	poolConfig *config.ResourcePoolConfig,
 	podsService *pods,
 	db *db.PgDB,
+	defaultNamespace string,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
 		maxSlotsPerPod:            maxSlotsPerPod,
@@ -80,6 +84,7 @@ func newResourcePool(
 		queuePositions:            tasklist.InitializeJobSortState(true),
 		db:                        db,
 		syslog:                    logrus.WithField("component", "k8s-rp"),
+		defaultNamespace:          defaultNamespace,
 	}
 }
 
@@ -544,13 +549,13 @@ func (k *kubernetesResourcePool) createResources(
 	var resources []*k8sPodResources
 	for pod := 0; pod < numPods; pod++ {
 		resources = append(resources, &k8sPodResources{
-			req:             req,
-			podsService:     k.podsService,
-			containerID:     cproto.NewID(),
-			slots:           slotsPerPod,
-			group:           k.groups[req.JobID],
-			initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
-			namespace:       k.poolConfig.KubernetesNamespace,
+			req:              req,
+			podsService:      k.podsService,
+			containerID:      cproto.NewID(),
+			slots:            slotsPerPod,
+			group:            k.groups[req.JobID],
+			initialPosition:  k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
+			defaultNamespace: k.defaultNamespace,
 		})
 	}
 	return resources
@@ -573,13 +578,13 @@ func (k *kubernetesResourcePool) restoreResources(
 	var resources []*k8sPodResources
 	for _, restoreResponse := range restoreResponses {
 		resources = append(resources, &k8sPodResources{
-			req:             req,
-			podsService:     k.podsService,
-			containerID:     cproto.ID(restoreResponse.containerID),
-			slots:           slotsPerPod,
-			group:           k.groups[req.JobID],
-			initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
-			namespace:       k.poolConfig.KubernetesNamespace,
+			req:              req,
+			podsService:      k.podsService,
+			containerID:      cproto.ID(restoreResponse.containerID),
+			slots:            slotsPerPod,
+			group:            k.groups[req.JobID],
+			initialPosition:  k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
+			defaultNamespace: k.defaultNamespace,
 
 			started: restoreResponse.started,
 		})
@@ -657,13 +662,13 @@ func (k *kubernetesResourcePool) schedulePendingTasks() {
 }
 
 type k8sPodResources struct {
-	req             *sproto.AllocateRequest
-	podsService     *pods
-	group           *tasklist.Group
-	containerID     cproto.ID
-	slots           int
-	initialPosition decimal.Decimal
-	namespace       string
+	req              *sproto.AllocateRequest
+	podsService      *pods
+	group            *tasklist.Group
+	containerID      cproto.ID
+	slots            int
+	initialPosition  decimal.Decimal
+	defaultNamespace string
 
 	started *sproto.ResourcesStarted
 }
@@ -703,13 +708,19 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
+	ns, err := workspace.GetNamespaceFromWorkspace(context.TODO(), spec.Workspace)
+	if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
+		ns = p.defaultNamespace
+	} else if err != nil {
+		return err
+	}
 	return p.podsService.StartTaskPod(StartTaskPod{
 		Req:          p.req,
 		AllocationID: p.req.AllocationID,
 		Spec:         spec,
 		Slots:        p.slots,
 		Rank:         rri.AgentRank,
-		Namespace:    p.namespace,
+		Namespace:    ns,
 		LogContext:   logCtx,
 	})
 }

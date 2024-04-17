@@ -857,7 +857,7 @@ func createMockPodsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 
 	return &pods{
 		namespace:           "default",
-		namespaceToPoolName: make(map[string]string),
+		namespaceSet:        make(map[string]bool),
 		currentNodes:        nodes,
 		podNameToPodHandler: podHandlers,
 		slotType:            devSlotType,

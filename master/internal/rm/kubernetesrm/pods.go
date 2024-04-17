@@ -71,7 +71,7 @@ type pods struct {
 	wg waitgroupx.Group
 
 	namespace             string
-	namespaceToPoolName   map[string]string
+	namespaceSet          map[string]bool
 	masterServiceName     string
 	scheduler             string
 	slotType              device.Type
@@ -147,7 +147,7 @@ type refreshPodStates struct {
 // newPodsService creates a new pod service for launching, querying and interacting with k8s pods.
 func newPodsService(
 	namespace string,
-	namespaceToPoolName map[string]string,
+	namespaceSet map[string]bool,
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
@@ -169,7 +169,7 @@ func newPodsService(
 		wg: waitgroupx.WithContext(context.Background()),
 
 		namespace:                    namespace,
-		namespaceToPoolName:          namespaceToPoolName,
+		namespaceSet:                 namespaceSet,
 		masterServiceName:            masterServiceName,
 		masterTLSConfig:              masterTLSConfig,
 		scheduler:                    scheduler,
@@ -376,7 +376,7 @@ func (p *pods) startClientSet() error {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
 
-	for _, ns := range append(maps.Keys(p.namespaceToPoolName), p.namespace) {
+	for _, ns := range append(maps.Keys(p.namespaceSet), p.namespace) {
 		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
 	}
@@ -435,7 +435,7 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 	}
 	existingConfigMaps := make(set.Set[string])
 	for _, cm := range configMaps.Items {
-		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
+		if _, ok := p.namespaceSet[cm.Namespace]; !ok {
 			continue
 		}
 		existingConfigMaps.Insert(cm.Name)
@@ -446,7 +446,7 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 	var ports [][]int
 	var resourcePool string
 	for _, pod := range pods.Items {
-		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
+		if _, ok := p.namespaceSet[pod.Namespace]; !ok {
 			continue
 		}
 
@@ -630,7 +630,7 @@ func (p *pods) refreshPodStates(allocationID model.AllocationID) error {
 	}
 
 	for _, pod := range pods.Items {
-		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
+		if _, ok := p.namespaceSet[pod.Namespace]; !ok {
 			continue
 		}
 		pod := pod
@@ -671,7 +671,7 @@ func (p *pods) deleteDoomedKubernetesResources() error {
 	toKillPods := &k8sV1.PodList{}
 	savedPodNames := make(set.Set[string])
 	for _, pod := range pods.Items {
-		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
+		if _, ok := p.namespaceSet[pod.Namespace]; !ok {
 			continue
 		}
 
@@ -708,7 +708,7 @@ func (p *pods) deleteDoomedKubernetesResources() error {
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
-		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
+		if _, ok := p.namespaceSet[cm.Namespace]; !ok {
 			continue
 		}
 
@@ -726,7 +726,7 @@ func (p *pods) deleteDoomedKubernetesResources() error {
 }
 
 func (p *pods) startPodInformer() error {
-	for namespace := range p.namespaceToPoolName {
+	for namespace := range p.namespaceSet {
 		i, err := newPodInformer(
 			context.TODO(),
 			determinedLabel,
@@ -766,7 +766,7 @@ func (p *pods) startNodeInformer() error {
 }
 
 func (p *pods) startEventListeners() error {
-	for namespace := range p.namespaceToPoolName {
+	for namespace := range p.namespaceSet {
 		l, err := newEventInformer(
 			context.TODO(),
 			p.clientSet.CoreV1().Events(namespace),
@@ -785,7 +785,7 @@ func (p *pods) startEventListeners() error {
 }
 
 func (p *pods) startPreemptionListeners() error {
-	for namespace := range p.namespaceToPoolName {
+	for namespace := range p.namespaceSet {
 		l, err := newPodInformer(
 			context.TODO(),
 			determinedPreemptionLabel,
@@ -1337,8 +1337,8 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 		Operator: k8sV1.TolerationOpEqual,
 	}}
 	cpuTolerations, gpuTolerations := extractTolerations(p.baseContainerDefaults)
-	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
-	nodesToPools := make(map[string][]string, len(p.namespaceToPoolName))
+	poolsToNodes := make(map[string][]*k8sV1.Node)
+	nodesToPools := make(map[string][]string)
 
 	for _, node := range p.currentNodes {
 		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
@@ -1395,7 +1395,7 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 
 	// Build the set of summaries for each resource pool
 	containers := p.containersPerResourcePool()
-	summaries := make(map[string]model.AgentSummary, len(p.namespaceToPoolName))
+	summaries := make(map[string]model.AgentSummary)
 	for poolName, nodes := range poolsToNodes {
 		slots := model.SlotsSummary{}
 		numContainersInPool := containers[poolName]
@@ -1620,7 +1620,7 @@ func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
 }
 
 func (p *pods) containersPerResourcePool() map[string]int {
-	counts := make(map[string]int, len(p.namespaceToPoolName))
+	counts := make(map[string]int)
 	for _, pool := range p.podNameToResourcePool {
 		counts[pool]++
 	}

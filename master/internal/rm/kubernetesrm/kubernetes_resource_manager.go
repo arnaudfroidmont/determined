@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -86,18 +87,19 @@ func New(
 		db: db,
 	}
 
-	poolNamespaces := make(map[string]string)
-	for i := range k.poolsConfig {
-		if k.poolsConfig[i].KubernetesNamespace == "" {
-			k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
-		}
-
-		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
+	workspaceNamespaces := make(map[string]bool)
+	namespaces, err := workspace.GetAllNamespacesForRM(context.TODO(), k.config.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting namespaces for cluster: %w", err)
 	}
+	for _, v := range namespaces {
+		workspaceNamespaces[v] = true
+	}
+	workspaceNamespaces[k.config.Namespace] = true
 
 	k.podsService = newPodsService(
 		k.config.Namespace,
-		poolNamespaces,
+		workspaceNamespaces,
 		k.config.MasterServiceName,
 		k.masterTLSConfig,
 		k.loggingConfig,
@@ -124,7 +126,7 @@ func New(
 		}
 
 		poolConfig := poolConfig
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db)
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db, k.config.Namespace)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()

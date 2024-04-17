@@ -132,3 +132,35 @@ func AllWorkspaces(ctx context.Context) ([]*model.Workspace, error) {
 	}
 	return w, nil
 }
+
+// GetNamespaceFromWorkspace returns the namespace for the given workspace and cluster.
+// TODO: add new field to filter by rm name.
+func GetNamespaceFromWorkspace(ctx context.Context, workspaceName string) (string, error) {
+	var ns string
+	err := db.Bun().
+		NewSelect().
+		TableExpr("workspaces as w").
+		ColumnExpr("n.name").
+		Join("JOIN namespaces AS n ON  n.workspace_id = w.id").
+		Where("w.name = ?", workspaceName).
+		Scan(ctx, &ns)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get namespace")
+	}
+	return ns, nil
+}
+
+// GetAllNamespacesForRM gets all namespaces associated with a particular cluster.
+func GetAllNamespacesForRM(ctx context.Context, rmName string) ([]string, error) {
+	var ns []string
+	err := db.Bun().
+		NewSelect().
+		Table("namespaces").
+		ColumnExpr("DISTINCT name").
+		Where("resource_manager_name = ?", rmName).
+		Scan(ctx, &ns)
+	if err != nil {
+		return ns, errors.Wrapf(err, "failed to get namespace")
+	}
+	return ns, nil
+}
