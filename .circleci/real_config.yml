@@ -1334,6 +1334,10 @@ jobs:
           command: make -C docs check-links
 
   publish-docs:
+    parameters:
+      dry-run:
+        type: boolean
+        default: false
     docker:
       - image: hashicorp/terraform:latest
     steps:
@@ -1342,7 +1346,14 @@ jobs:
           at: .
       - run: apk add make curl
       - run: pip install --user awscli  # used in the terraform apply
-      - run: make -C docs publish
+      - run: |
+          if <<parameters.dry-run>>; then
+            echo 'Doing a dry run!'
+            make -C docs pre-publish publish-check
+            make -C docs/deploy plan
+          else
+            make -C docs publish
+          fi
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
   # all dependent scripts are updated.
@@ -3969,6 +3980,16 @@ workflows:
           filters: *release-filters
           requires:
             - package-and-push-system-release
+
+      - publish-docs:
+          name: publish-docs-rc
+          matrix:
+            parameters:
+              dry-run: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *rc-filters
 
       - publish-docs:
           requires:
