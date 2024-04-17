@@ -446,7 +446,10 @@ func (a *apiServer) PostRunMetadata(
 	}
 
 	// Flatten Request Metadata.
-	flatMetadata := run.FlattenRunMetadata(req.Metadata.AsMap())
+	flatMetadata, keyCount, err := run.FlattenRunMetadata(req.Metadata.AsMap())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	flatKeys := make(map[string]struct{})
 	for _, record := range flatMetadata {
 		flatKeys[record.FlatKey] = struct{}{}
@@ -455,8 +458,9 @@ func (a *apiServer) PostRunMetadata(
 	// Update the metadata in DB
 	result, err := db.UpdateRunMetadata(ctx,
 		int(req.RunId),
-		flatKeys,
 		req.Metadata.AsMap(),
+		flatKeys,
+		keyCount,
 		flatMetadata,
 	)
 	if err != nil && status.Code(err) == codes.InvalidArgument {

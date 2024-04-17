@@ -1,6 +1,5 @@
 DROP VIEW trials;
-
-CREATE VIEW OR REPLACE trials AS
+CREATE VIEW trials AS
 SELECT
   t.run_id AS id,
 

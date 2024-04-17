@@ -727,6 +727,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     logRetentionDays: "typing.Optional[int]" = None
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -752,6 +753,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -780,6 +782,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
         if not isinstance(searcherMetricValue, Unset):
@@ -820,6 +824,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
         if "searcherMetricValue" in obj:
@@ -860,6 +866,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
         if not omit_unset or "searcherMetricValue" in vars(self):

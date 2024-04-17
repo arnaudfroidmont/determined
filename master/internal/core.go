@@ -180,13 +180,40 @@ func (m *Master) promHealth(ctx context.Context) {
 	}()
 }
 
-//	@Summary Get health of Determined and the dependencies.
-//	@Tags	 Cluster
-//	@ID		 health
-//	@Produce json
-//	@Success 200     {object} model.HealthCheck
-//	@Failure 503     {object} model.HealthCheck
-//	@Router	 /health [get]
+func (m *Master) promHealth(ctx context.Context) {
+	determinedHealthy := promclient.NewGauge(promclient.GaugeOpts{
+		Name: "determined_healthy",
+		Help: "Health status of Determined (1 for healthy, 0 for unhealthy)",
+	})
+	promclient.MustRegister(determinedHealthy)
+
+	go func() {
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				hc := m.healthCheck(ctx)
+				if hc.Status == model.Healthy {
+					determinedHealthy.Set(1)
+				} else {
+					determinedHealthy.Set(0)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
+//	@Summary	Get health of Determined and the dependencies.
+//	@Tags		Cluster
+//	@ID			health
+//	@Produce	json
+//	@Success	200	{object}	model.HealthCheck
+//	@Failure	503	{object}	model.HealthCheck
+//	@Router		/health [get]
 //
 // nolint:lll
 func (m *Master) healthCheckEndpoint(c echo.Context) error {

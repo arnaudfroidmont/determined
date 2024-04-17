@@ -1,6 +1,8 @@
 package run
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,7 +29,9 @@ func TestFlattenMetadata(t *testing.T) {
 			},
 		},
 	}
-	flattened := FlattenRunMetadata(data)
+	flattened, keyCount, err := FlattenRunMetadata(data)
+	require.NoError(t, err)
+	require.Equal(t, 8, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -97,13 +101,15 @@ func TestFlattenMetadata(t *testing.T) {
 
 func TestFlattenMetadataEmpty(t *testing.T) {
 	data := map[string]interface{}{}
-	flattened := FlattenRunMetadata(data)
-	require.ElementsMatch(t, []model.RunMetadataIndex{}, flattened)
+	_, _, err := FlattenRunMetadata(data)
+	require.Error(t, err, "metadata is empty")
 }
 
+// TODO(corban): this should actually be adjusted to return an error since we don't want to
+// allow empty post requests to be made to the metadata endpoint.
 func TestFlattenMetadataNil(t *testing.T) {
-	flattened := FlattenRunMetadata(nil)
-	require.ElementsMatch(t, []model.RunMetadataIndex{}, flattened)
+	_, _, err := FlattenRunMetadata(nil)
+	require.Error(t, err, "metadata is empty")
 }
 
 func TestFlattenMetadataNested(t *testing.T) {
@@ -112,7 +118,9 @@ func TestFlattenMetadataNested(t *testing.T) {
 			"key2": 1,
 		},
 	}
-	flattened := FlattenRunMetadata(data)
+	flattened, keyCount, err := FlattenRunMetadata(data)
+	require.NoError(t, err)
+	require.Equal(t, 2, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -131,7 +139,9 @@ func TestFlattenMetadataArray(t *testing.T) {
 			2,
 		},
 	}
-	flattened := FlattenRunMetadata(data)
+	flattened, keyCount, err := FlattenRunMetadata(data)
+	require.NoError(t, err)
+	require.Equal(t, 1, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -158,7 +168,9 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 			},
 		},
 	}
-	flattened := FlattenRunMetadata(data)
+	flattened, keyCount, err := FlattenRunMetadata(data)
+	require.NoError(t, err)
+	require.Equal(t, 2, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -227,7 +239,7 @@ func TestMergeRunMetadataNested(t *testing.T) {
 	}, merged)
 }
 
-func TestMergeRunMetadataArrayFailure(t *testing.T) {
+func TestMergeRunMetadataArrayAppend(t *testing.T) {
 	data1 := map[string]interface{}{
 		"key1": []interface{}{
 			1,
@@ -239,8 +251,9 @@ func TestMergeRunMetadataArrayFailure(t *testing.T) {
 			3,
 		},
 	}
-	_, err := db.MergeRunMetadata(data1, data2)
-	require.ErrorContains(t, err, "attempts to overwrite existing entry ('key1': [1 2]) with new value '3': invalid input")
+	merged, err := db.MergeRunMetadata(data1, data2)
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{"key1": []interface{}{1, 2, 3}}, merged)
 }
 
 func TestMergeRunMetadataArray(t *testing.T) {
@@ -393,4 +406,153 @@ func TestMergeRunMetadataAppendingToPrimitive(t *testing.T) {
 			},
 		},
 	}, merged)
+}
+
+func TestFlattenMetadataTooLongKey(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": 1,
+		"key2": 2,
+	}
+	data[strings.Repeat("a", MaxMetadataKeyLength+1)] = 3
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata key exceeds maximum length of %d characters",
+			MaxMetadataKeyLength,
+		),
+	)
+}
+
+func TestFlattenMetadataTooLongArray(t *testing.T) {
+	data := map[string]interface{}{}
+	tooLongArray := make([]interface{}, MaxMetadataArrayLength+1)
+	for i := range tooLongArray {
+		tooLongArray[i] = i
+	}
+	data["key1"] = tooLongArray
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata array exceeds maximum length of %d/%d elements",
+			len(tooLongArray), MaxMetadataArrayLength,
+		),
+	)
+}
+
+func TestFlattenMetadataTooLongNestedArray(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": []interface{}{
+			1,
+			2,
+			3,
+			4,
+			5,
+		},
+	}
+	nestedArray := make([]interface{}, MaxMetadataArrayLength+1)
+	for i := range nestedArray {
+		nestedArray[i] = i
+	}
+	data["key1"].([]interface{})[0] = nestedArray
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata array exceeds maximum length of %d/%d elements",
+			len(nestedArray),
+			MaxMetadataArrayLength,
+		),
+	)
+}
+
+func TestFlattenMetadataTooLongValue(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": strings.Repeat("a", MaxMetadataValueStringLength+1),
+	}
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata value exceeds maximum length of %d characters",
+			MaxMetadataValueStringLength,
+		),
+	)
+}
+
+func TestFlattenMetadataArrayElementTooLongValue(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": []interface{}{
+			strings.Repeat("a", MaxMetadataValueStringLength+1),
+		},
+	}
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf("metadata value exceeds maximum length of %d characters",
+			MaxMetadataValueStringLength,
+		),
+	)
+}
+
+func TestFlattenMetadataArrayElementTooLongKey(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": []interface{}{
+			1,
+		},
+	}
+	data[strings.Repeat("a", MaxMetadataKeyLength+1)] = 2
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata key exceeds maximum length of %d characters",
+			MaxMetadataKeyLength,
+		),
+	)
+}
+
+func TestFlattenMetadataArrayElementTooLongKeyInNestedArray(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": []interface{}{
+			map[string]interface{}{
+				"key2": 1,
+			},
+		},
+	}
+	data["key1"].([]interface{})[0].(map[string]interface{})[strings.Repeat("a", MaxMetadataKeyLength+1)] = 2
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf("metadata key exceeds maximum length of %d characters",
+			MaxMetadataKeyLength,
+		),
+	)
+}
+
+func TestFlattenMetadataNestingTooDeep(t *testing.T) {
+	data := map[string]interface{}{}
+	current := data
+	for i := 0; i < MaxMetadataDepth+1; i++ {
+		key := fmt.Sprintf("key_%d", i)
+		current[key] = map[string]interface{}{"key_level": i}
+		current = current[key].(map[string]interface{})
+	}
+	_, _, err := FlattenRunMetadata(data)
+	require.ErrorContains(
+		t,
+		err,
+		fmt.Sprintf(
+			"metadata exceeds maximum nesting depth of %d",
+			MaxMetadataDepth,
+		),
+	)
 }

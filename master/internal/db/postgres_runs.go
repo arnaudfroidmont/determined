@@ -13,6 +13,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// MaxRunMetadataKeyCount is the maximum number of unique metadata keys allowed on a run.
+// added here to avoid circular dependency on run package.
+const MaxRunMetadataKeyCount = 1000
+
 // getRunMetadataKeys returns the unique metadata keys for a run.
 func getRunMetadataKeys(ctx context.Context, rID int) ([]string, error) {
 	var res []string
@@ -84,12 +88,19 @@ func MergeRunMetadata(current, addition map[string]interface{}) (map[string]inte
 				}
 				current[newKey] = oldVal
 			default:
-				return nil, errors.Wrapf(ErrInvalidInput,
-					"attempts to overwrite existing entry ('%s': %v) with new value '%v'",
-					newKey,
-					oldVal,
-					newVal,
-				)
+				switch typedOldVal := oldVal.(type) {
+				case map[string]interface{}:
+					current[newKey] = []interface{}{typedOldVal, newVal}
+				case []interface{}:
+					current[newKey] = append(typedOldVal, newVal)
+				default:
+					return nil, errors.Wrapf(ErrInvalidInput,
+						"attempts to overwrite existing entry ('%s': %v) with new value '%v'",
+						newKey,
+						oldVal,
+						newVal,
+					)
+				}
 			}
 		} else {
 			// Add in new key-value pairs that are not in the old metadata.
@@ -105,18 +116,43 @@ func updateRunMetadata(
 	flatKeySet map[string]struct{},
 	rawMetadata map[string]interface{},
 	flatMetadata []model.RunMetadataIndex,
+	keyCount int,
 	result *map[string]interface{},
 ) func(context.Context, bun.Tx) error {
 	return func(ctx context.Context, tx bun.Tx) error {
 		// use pessimistic locking to prevent concurrent updates
-		run := &model.Run{ID: rID}
-		err := tx.NewRaw("SELECT project_id, metadata FROM runs WHERE id = ? FOR UPDATE", rID).Scan(ctx, run)
+		type metadataRun struct {
+			bun.BaseModel   `bun:"runs"`
+			ProjectID       int
+			Metadata        map[string]interface{}
+			NumMetadataKeys int
+		}
+		run := &metadataRun{}
+		err := tx.NewRaw(`
+			SELECT 
+				project_id, 
+				metadata, 
+				length(metadata::TEXT) - length(replace(metadata::text, ':', ''))
+				/ length(':') AS num_metadata_keys
+			FROM 
+				runs 
+			WHERE 
+				id = ? 
+			FOR UPDATE`, rID).Scan(ctx, run)
 		if err != nil {
 			return fmt.Errorf("querying run metadata: %w", err)
 		}
-		currentMetadata := run.Metadata
-		if currentMetadata == nil {
-			currentMetadata = make(map[string]interface{})
+		if run.NumMetadataKeys+keyCount > MaxRunMetadataKeyCount {
+			return status.Errorf(
+				codes.InvalidArgument,
+				"request exceeds run metadata key count limit %d/%d on run(%d)",
+				(run.NumMetadataKeys + keyCount),
+				MaxRunMetadataKeyCount,
+				rID,
+			)
+		}
+		if run.Metadata == nil {
+			run.Metadata = make(map[string]interface{})
 		}
 
 		// check for duplicate keys
@@ -140,7 +176,7 @@ func updateRunMetadata(
 		}
 
 		// merge the new metadata with the existing metadata
-		temp, err := MergeRunMetadata(currentMetadata, rawMetadata)
+		temp, err := MergeRunMetadata(run.Metadata, rawMetadata)
 		if err != nil {
 			if errors.Is(err, ErrInvalidInput) {
 				return status.Errorf(codes.InvalidArgument, err.Error())
@@ -153,7 +189,7 @@ func updateRunMetadata(
 			return fmt.Errorf("updating run metadata on run(%d): %w", rID, err)
 		}
 
-		// update flat metadata indexes with relevant ids
+		// hydrate the flat metadata with relevant ids.
 		for i := range flatMetadata {
 			flatMetadata[i].RunID = rID
 			flatMetadata[i].ProjectID = run.ProjectID
@@ -171,14 +207,15 @@ func updateRunMetadata(
 func UpdateRunMetadata(
 	ctx context.Context,
 	rID int,
-	flatKeySet map[string]struct{},
 	rawMetadata map[string]interface{},
+	flatKeySet map[string]struct{},
+	keyCount int,
 	flatMetadata []model.RunMetadataIndex,
 ) (result map[string]interface{}, err error) {
 	err = Bun().RunInTx(
 		ctx,
 		&sql.TxOptions{Isolation: sql.LevelReadCommitted},
-		updateRunMetadata(rID, flatKeySet, rawMetadata, flatMetadata, &result),
+		updateRunMetadata(rID, flatKeySet, rawMetadata, flatMetadata, keyCount, &result),
 	)
 
 	if err != nil {

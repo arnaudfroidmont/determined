@@ -927,6 +927,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     logRetentionDays?: number;
+    /**
+     * metadata associated with the trial (based off the metadata stored in the run).
+     * @type {any}
+     * @memberof Trialv1Trial
+     */
+    metadata?: any;
 }
 /**
  * 

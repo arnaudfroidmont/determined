@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	runService "github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -731,4 +732,110 @@ func TestConcurrentMetadataPostsMultipleRuns(t *testing.T) {
 		require.Equal(t, len(rawMetadata), len(actualMetadata))
 		require.Equal(t, rawMetadata, actualMetadata)
 	}
+}
+
+func TestMetadataPostRequestWithTooManyKeysInRequest(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{}
+	for i := 0; i < db.MaxRunMetadataKeyCount+1; i++ {
+		rawMetadata[fmt.Sprintf("test_key%d", i)] = fmt.Sprintf("test_value%d", i)
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "request exceeds run metadata key count limit")
+}
+
+func TestMetadataPostRequestExceedMaxKeysWithCurrentKeys(t *testing.T) {
+	api, curUsers, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUsers)
+
+	rawMetadata := map[string]interface{}{}
+	for i := 0; i < db.MaxRunMetadataKeyCount; i++ {
+		rawMetadata[fmt.Sprintf("test_key%d", i)] = fmt.Sprintf("test_value%d", i)
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	rawMetadata2 := map[string]interface{}{}
+	rawMetadata2["test_key"] = "test_value"
+	metadata2 := newProtoStruct(t, rawMetadata2)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata2,
+	})
+	require.Error(t, err)
+	require.Contains(
+		t,
+		err.Error(),
+		fmt.Sprintf("request exceeds run metadata key count limit %d/%d",
+			db.MaxRunMetadataKeyCount+1,
+			db.MaxRunMetadataKeyCount,
+		),
+	)
+}
+
+func TestPostMetadataExceedMaxDepth(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	for i := 0; i < runService.MaxMetadataDepth; i++ {
+		rawMetadata = map[string]interface{}{"nested": rawMetadata}
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(t,
+		err.Error(),
+		fmt.Sprintf("metadata exceeds maximum nesting depth of %d", runService.MaxMetadataDepth),
+	)
+}
+
+func TestPostMetadataExceedMaxArrayLength(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested":   []interface{}{},
+	}
+	for i := 0; i < runService.MaxMetadataArrayLength+1; i++ {
+		rawMetadata["nested"] = append(rawMetadata["nested"].([]interface{}), i)
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(
+		t,
+		err.Error(),
+		fmt.Sprintf("metadata array exceeds maximum length of %d/%d elements",
+			runService.MaxMetadataArrayLength+1,
+			runService.MaxMetadataArrayLength,
+		),
+	)
 }
