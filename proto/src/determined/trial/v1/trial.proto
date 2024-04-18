@@ -149,7 +149,7 @@ message Trial {
   optional int32 log_retention_days = 22;
   // metadata associated with the trial (based off the metadata stored in the
   // run).
-  google.protobuf.Struct metadata = 23;
+  optional google.protobuf.Struct metadata = 23;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
