@@ -28,6 +28,7 @@ type S3Downloader struct {
 	client     *s3.S3
 	downloader *s3manager.Downloader
 	bucket     string
+	region     string
 	prefix     string
 	files      []archive.FileEntry
 }
@@ -101,6 +102,7 @@ func NewS3Downloader(
 	ctx context.Context,
 	aw archive.ArchiveWriter,
 	bucket string,
+	region string,
 	prefix string,
 	endpointURL *string,
 ) (*S3Downloader, error) {
@@ -118,11 +120,13 @@ func NewS3Downloader(
 	}
 
 	// if endpointFormat is nil, defaults to aws endpoint
-	region, err := GetS3BucketRegion(ctx, bucket, endpointFormat)
-	if err != nil {
+	if region == nil {
+	    region, err := GetS3BucketRegion(ctx, bucket, endpointFormat)
+	    if err != nil {
 		return nil, err
+	    }
 	}
-
+	
 	awsConfig := &aws.Config{Region: &region}
 
 	// configure for non-aws S3 providers
@@ -144,6 +148,7 @@ func NewS3Downloader(
 			d.Concurrency = 1 // Setting concurrency to 1 to use seqWriterAt
 		}),
 		bucket: bucket,
+		region: region,
 		prefix: prefix,
 	}, nil
 }
