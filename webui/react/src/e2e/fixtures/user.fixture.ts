@@ -104,7 +104,24 @@ export class UserFixture {
     return editedUser;
   }
 
-  async deactivateTestUsers(): Promise<void> {
+  async deactivateTestUsersFromTable(): Promise<void> {
+    const ids = ['a'];
+    // TODO get ids, select all, and click the big deactivate
+    await this.userManagementPage.table.table.headRow.selection.pwLocator.click();
+    // TODO i think i need a modal after selection
+    // then the action
+    for (const id of ids) {
+      const user = this.#users.get(id);
+      if (user === undefined) {
+        throw new Error(
+          `Expected user with id ${id} present on the table to have been created during this session`,
+        );
+      }
+      this.#users.set(String(id), { ...user, isActive: false });
+    }
+  }
+
+  async deactivateAllTestUsers(): Promise<void> {
     for await (const user of this.#users.values()) {
       if (user.isActive) {
         const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username))

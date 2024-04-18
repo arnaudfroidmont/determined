@@ -4,6 +4,7 @@ import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
+import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 
 test.describe('User Management', () => {
@@ -35,13 +36,25 @@ test.describe('User Management', () => {
       }
       expetedRowCount = Number(match[1]);
     });
-    for await (const [index, paginationOption] of [
-      pagination.perPage.perPage10,
-      pagination.perPage.perPage20,
-      pagination.perPage.perPage50,
-      pagination.perPage.perPage100,
-    ].entries()) {
-      await test.step(`Compare table rows with pagination: ${index + 1}/4`, async () => {
+    for await (const { name, paginationOption } of [
+      {
+        name: '10',
+        paginationOption: pagination.perPage.perPage10,
+      },
+      {
+        name: '20',
+        paginationOption: pagination.perPage.perPage20,
+      },
+      {
+        name: '50',
+        paginationOption: pagination.perPage.perPage50,
+      },
+      {
+        name: '100',
+        paginationOption: pagination.perPage.perPage100,
+      },
+    ]) {
+      await test.step(`Compare table rows with pagination: ${name}`, async () => {
         // BUG [INFENG-628] Users page loads slow
         await expect(
           repeatWithFallback(
@@ -97,7 +110,7 @@ test.describe('User Management', () => {
       await test.step('Deactivate User', async () => {
         // BUG [INFENG-628] Users page loads slow
         await expect(async () => {
-          await userFixtureSetupTeardown.deactivateTestUsers();
+          await userFixtureSetupTeardown.deactivateAllTestUsers();
         }).toPass({ timeout: 20_000 });
       });
       await pageSetupTeardown.close();
@@ -109,17 +122,17 @@ test.describe('User Management', () => {
       await userManagementPage.goto();
       await userManagementPage.search.pwLocator.fill(username);
       await expect(userManagementPage.getRowByID(id).user.pwLocator).toContainText(username);
+      // TODO validate more data on the table
     });
 
     test('Edit user', async ({ page, user }) => {
       const userManagementPage = new UserManagement(page);
-      let modifiedUser: User;
       await userManagementPage.goto();
       await test.step('Edit once', async () => {
         // BUG [INFENG-628] Users page loads slow
         await expect(async () => {
-          modifiedUser = await user.editUser(testUser, {
-            displayName: testUser.username + 'mama luigi',
+          testUser = await user.editUser(testUser, {
+            displayName: testUser.username + '_edited',
           });
         }).toPass({ timeout: 20_000 });
         await userManagementPage.toast.close.pwLocator.click();
@@ -128,9 +141,29 @@ test.describe('User Management', () => {
       await test.step('Edit again', async () => {
         // BUG [INFENG-628] Users page loads slow
         await expect(async () => {
-          testUser = await user.editUser(modifiedUser, { displayName: '', isAdmin: true });
+          testUser = await user.editUser(testUser, { displayName: '', isAdmin: true });
         }).toPass({ timeout: 20_000 });
       });
+    });
+
+    test('Group actions, pagination, and filter', async ({ page, user }) => {
+      const userManagementPage = new UserManagement(page);
+      await userManagementPage.goto();
+      await test.step('Create some users', async () => {
+        await Promise.all(Array.from({ length: 10 }, async () => await user.createUser()));
+      });
+      await test.step('Setup table filters', async () => {
+        // sort by most recent last
+        await userManagementPage.table.table.headRow.modified.pwLocator.click();
+        // search for users created this session
+        await userManagementPage.search.pwLocator.fill(sessionRandomHash);
+        // go to page 2 to see users
+        await userManagementPage.table.table.pagination.perPage.pwLocator.click();
+        await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
+        await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
+        await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1);
+      });
+      await test.step('Disable the user', async () => {});
     });
   });
 });
